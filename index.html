@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Stopwatch and Timer</title>
+    <style>
+        /* CSS styles */
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        .stopwatch-timer {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f2f2f2;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .stopwatch-timer h2 {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .stopwatch-timer .time-display {
+            text-align: center;
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .stopwatch-timer .input-group {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .stopwatch-timer .input-group label {
+            display: inline-block;
+            width: 80px;
+        }
+
+        .stopwatch-timer .input-group input {
+            padding: 5px;
+            width: 150px;
+        }
+
+        .stopwatch-timer .btn-container {
+            text-align: center;
+        }
+
+        .stopwatch-timer .btn {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #a6d785;
+            color: #ffffff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+
+        .stopwatch-timer .btn:last-child {
+            margin-right: 0;
+        }
+
+        .stopwatch-timer .btn:hover {
+            background-color: #8fbf66;
+        }
+    </style>
+</head>
+<body>
+    <div class="stopwatch-timer">
+        <h2>Stopwatch</h2>
+        <div class="time-display" id="stopwatch-display">00:00:00</div>
+        <div class="btn-container">
+            <button class="btn" id="start-stopwatch" onclick="toggleStopwatch()">Start</button>
+            <button class="btn" id="stop-stopwatch" onclick="stopStopwatch()" disabled>Stop</button>
+            <button class="btn" id="reset-stopwatch" onclick="resetStopwatch()" disabled>Reset</button>
+        </div>
+    </div>
+
+    <div class="stopwatch-timer">
+        <h2>Timer</h2>
+        <div class="time-display" id="timer-display">00:00:00</div>
+        <div class="input-group">
+            <label for="hours">Hours:</label>
+            <input type="number" id="hours" min="0" placeholder="0">
+        </div>
+        <div class="input-group">
+            <label for="minutes">Minutes:</label>
+            <input type="number" id="minutes" min="0" placeholder="0">
+        </div>
+        <div class="input-group">
+            <label for="seconds">Seconds:</label>
+            <input type="number" id="seconds" min="0" placeholder="0">
+        </div>
+        <div class="btn-container">
+            <button class="btn" id="start-timer" onclick="toggleTimer()">Start</button>
+            <button class="btn" id="stop-timer" onclick="stopTimer()">Stop</button>
+            <button class="btn" id="reset-timer" onclick="resetTimer()">Reset</button>
+        </div>
+    </div>
+
+    <audio id="sound" src="sounds/alarm.mp4"></audio>
+    <script>
+        // Stopwatch variables
+        var stopwatchInterval;
+        var stopwatchRunning = false;
+        var stopwatchTime = 0;
+        var stopwatchResumeTime = 0;
+
+        // Timer variables
+        var timerInterval;
+        var timerRunning = false;
+        var timerTime = 0;
+        var timerTarget = 0;
+        var timerResumeTime = 0;
+
+        function toggleStopwatch() {
+            if (!stopwatchRunning) {
+                if (stopwatchTime === 0) {
+                    stopwatchInterval = setInterval(updateStopwatch, 1000);
+                } else {
+                    stopwatchInterval = setInterval(updateStopwatch, 1000);
+                    stopwatchResumeTime = stopwatchTime;
+                }
+                stopwatchRunning = true;
+
+                document.getElementById("start-stopwatch").disabled = true;
+                document.getElementById("stop-stopwatch").disabled = false;
+                document.getElementById("reset-stopwatch").disabled = true;
+                document.getElementById("start-stopwatch").innerText = "Resume";
+            }
+        }
+
+        function stopStopwatch() {
+            clearInterval(stopwatchInterval);
+            stopwatchRunning = false;
+            stopwatchResumeTime = stopwatchTime;
+
+            document.getElementById("start-stopwatch").disabled = false;
+            document.getElementById("stop-stopwatch").disabled = true;
+            document.getElementById("reset-stopwatch").disabled = false;
+            document.getElementById("start-stopwatch").innerText = "Resume";
+        }
+
+        function resetStopwatch() {
+            clearInterval(stopwatchInterval);
+            stopwatchRunning = false;
+            stopwatchTime = 0;
+            stopwatchResumeTime = 0;
+            updateStopwatch();
+
+            document.getElementById("start-stopwatch").disabled = false;
+            document.getElementById("stop-stopwatch").disabled = true;
+            document.getElementById("reset-stopwatch").disabled = true;
+            document.getElementById("start-stopwatch").innerText = "Start";
+        }
+
+        function updateStopwatch() {
+            stopwatchTime++;
+            var hours = Math.floor(stopwatchTime / 3600);
+            var minutes = Math.floor((stopwatchTime % 3600) / 60);
+            var seconds = stopwatchTime % 60;
+
+            var timeDisplay = document.getElementById("stopwatch-display");
+            timeDisplay.innerText = formatTime(hours) + ":" + formatTime(minutes) + ":" + formatTime(seconds);
+        }
+
+        function toggleTimer() {
+            if (!timerRunning) {
+                if (timerTime === 0) {
+                    var hours = parseInt(document.getElementById("hours").value) || 0;
+                    var minutes = parseInt(document.getElementById("minutes").value) || 0;
+                    var seconds = parseInt(document.getElementById("seconds").value) || 0;
+
+                    timerTarget = hours * 3600 + minutes * 60 + seconds;
+
+                    if (timerTarget > 0) {
+                        timerTime = timerTarget;
+                        updateTimer();
+
+                        timerInterval = setInterval(updateTimer, 1000);
+                        timerRunning = true;
+
+                        document.getElementById("start-timer").disabled = true;
+                        document.getElementById("stop-timer").disabled = false;
+                        document.getElementById("reset-timer").disabled = true;
+                        document.getElementById("start-timer").innerText = "Resume";
+                    } else {
+                        alert("Please enter a valid time.");
+                    }
+                } else {
+                    timerInterval = setInterval(updateTimer, 1000);
+                    timerResumeTime = timerTime;
+                    timerRunning = true;
+
+                    document.getElementById("start-timer").disabled = true;
+                    document.getElementById("stop-timer").disabled = false;
+                    document.getElementById("reset-timer").disabled = true;
+                    document.getElementById("start-timer").innerText = "Resume";
+                }
+            }
+        }
+
+        function stopTimer() {
+            clearInterval(timerInterval);
+            timerRunning = false;
+            timerResumeTime = timerTime;
+
+            document.getElementById("start-timer").disabled = false;
+            document.getElementById("stop-timer").disabled = true;
+            document.getElementById("reset-timer").disabled = false;
+            document.getElementById("start-timer").innerText = "Resume";
+        }
+
+        function resetTimer() {
+            clearInterval(timerInterval);
+            timerRunning = false;
+            timerTime = 0;
+            timerResumeTime = 0;
+            updateTimer();
+
+            document.getElementById("start-timer").disabled = false;
+            document.getElementById("stop-timer").disabled = true;
+            document.getElementById("reset-timer").disabled = true;
+            document.getElementById("start-timer").innerText = "Start";
+            document.getElementById("hours").value = "";
+            document.getElementById("minutes").value = "";
+            document.getElementById("seconds").value = "";
+        }
+
+        function updateTimer() {
+            if (timerTime <= 0) {
+                clearInterval(timerInterval);
+                timerRunning = false;
+
+                document.getElementById("start-timer").disabled = false;
+                document.getElementById("stop-timer").disabled = true;
+                document.getElementById("reset-timer").disabled = false;
+                document.getElementById("start-timer").innerText = "Start";
+
+                document.getElementById("timer-display").style.fontSize = "36px";
+                document.getElementById("timer-display").innerText = "Times Up!";
+
+                // Play sound
+                var sound = document.getElementById("sound");
+                sound.play();
+            } else {
+                var hours = Math.floor(timerTime / 3600);
+                var minutes = Math.floor((timerTime % 3600) / 60);
+                var seconds = timerTime % 60;
+
+                var timeDisplay = document.getElementById("timer-display");
+                timeDisplay.innerText = formatTime(hours) + ":" + formatTime(minutes) + ":" + formatTime(seconds);
+
+                timerTime--;
+            }
+        }
+
+        function formatTime(time) {
+            return time < 10 ? "0" + time : time;
+        }
+    </script>
+</body>
+</html>
